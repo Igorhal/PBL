@@ -8,6 +8,5 @@ Files:
  b) mega (Arduino Mega 2560):
     If you PC doesn't detect this device, you need to install CH340 driver. ArdunioJSON library is required, you can install it via Liblary Manager (Tools -> Library Manager -> search for 'ArdunioJSON').  
  <br />
- <br />
   c) panda (Lattepanda)
     Admin password: admin22.
