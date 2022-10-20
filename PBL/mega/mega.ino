@@ -13,6 +13,9 @@
 #include <SPI.h>
 #include <mcp2515.h>
 
+//JSON doc size
+#define JSON_SIZE 512 
+
 //CAN bus variables
 static const int MASK = 0x7FF; //CAN module filtering MASK 11bit, 7FF - on all bits
 static const int MEGA_ID_RECV = 0x010; //CAN device id for receiving
@@ -33,8 +36,8 @@ MCP2515 mcp2515(53); //MCP2515 instance, 53-> CS/SS pin
 String recvStr;
 
 //JSON variables
-DynamicJsonDocument recvDoc(512);
-DynamicJsonDocument sendDoc(512);
+DynamicJsonDocument recvDoc(JSON_SIZE);
+DynamicJsonDocument sendDoc(JSON_SIZE);
 String strMotors[] = {"MotorFL", "MotorFR", "MotorRL", "MotorRR"}; //JSON headers
 
 void setup() {
@@ -65,13 +68,33 @@ void setup() {
 void loop() {
   if (canOk) {
     //SERIAL INSTRUCTIONS READ
-    if (Serial.available() > 0) {
-      recvStr = Serial.readString();
-      recvStr.trim();
-
-      //String to char[]
-      char buff[recvStr.length() + 1];
-      recvStr.toCharArray(buff, recvStr.length() + 1);
+    if (Serial.available() > 0) { //Check for data in serial port
+      char recvData[JSON_SIZE + 1]; //create char array for received data
+      memset(recvData, '\0', JSON_SIZE + 1); //clear array
+      unsigned int message_pos = 0; //index of read bytes
+      //read data until 2x} (end of json frame)
+      while (Serial.available() > 0)
+      {
+        char inByte = Serial.read();
+        if (inByte == '{') {
+          recvData[message_pos] = inByte;
+          message_pos++;
+          while (true) {
+            char inByte = Serial.read();
+            recvData[message_pos] = inByte;
+            if (inByte == '}' && recvData[message_pos - 1] == '}' || inByte == '\n' || inByte == '\r' || inByte == '\0') {
+              message_pos++;
+              recvData[message_pos] = '\0';
+              break;
+            }
+            else
+            {
+              recvData[message_pos] = inByte;
+              message_pos++;
+            }
+          }
+        }
+      }
 
       //Json deserialize, on success send instructions to Pi Pico via CAN
       DeserializationError error = deserializeJson(recvDoc, buff);
@@ -108,7 +131,7 @@ void loop() {
       if (mcp2515.readMessage(&canMsgPicoRecv[i]), "CAN readMessage: ") {
         JsonObject motorsObjects[i] = sendDoc.createNestedObject(strMotors[i]);
 
-        //assign received data to JSON object varaibles, data type may be different 
+        //assign received data to JSON object varaibles, data type may be different
         motorsObjects[i]["ValA"] = (int) canMsgPicoRecv[i].data[0];
         motorsObjects[i]["ValB"] = (int) canMsgPicoRecv[i].data[1];
         motorsObjects[i]["ValC"] = (int) canMsgPicoRecv[i].data[2];
