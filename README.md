@@ -10,3 +10,10 @@ Files:
  <br />
   c) panda (Lattepanda)
     Admin password: admin22.
+    TCP server receiving data from client in JSON, sending it via serial port, receiving response from serial port and sending it back to client. 
+  d) Python client program. Sending instructions and receiving data in Json. 
+  
+  JSON instruction format: {"MotorFL":{"speed":111,"direction":1,"time":100},"MotorFR":{"speed":112,"direction":1,"time":100},"MotorRL":{"speed":113,"direction":1,"time":100},"MotorRR":{"speed":114,"direction":1,"time":100}}
+  JSON response format: {"MotorFL":{"ValA":11,"ValB":21},"MotorFR":{"ValA":12,"ValB":22},"MotorRL":{"ValA":13,"ValB":23},"MotorRR":{"ValA":14,"ValB":24}}
+  
+  Format must be the same in TCP Client and Arduino Mega 256. If changed,software on this devices must be adapted.
